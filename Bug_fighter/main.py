@@ -9,7 +9,7 @@ main_window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Bug Fighter')
 clock = pygame.time.Clock()
 BG = pygame.transform.scale(pygame.image.load('./Assets/BG.jpg').convert(), (WIDTH, HEIGHT))
-
+laser_sound = pygame.mixer.Sound('./Assets/Music/laser.wav')
 def get_high():
     with open('./Assets/HS.txt', 'r') as HS:
         try:
@@ -20,6 +20,9 @@ def get_high():
 
 
 def play():
+    pygame.mixer.music.load('./Assets/Music/play_music.wav')
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play()
     class Player(pygame.sprite.Sprite):
         def __init__(self, pos, groups):
             super().__init__(groups)
@@ -33,6 +36,7 @@ def play():
             self.shoot_time = None
             self.score = 0
             self.health = 3
+            self.max_hp = 10
             self.cannons = 1
             self.cannon_offset = self.rect.width / (self.cannons + 1)
 
@@ -56,11 +60,7 @@ def play():
             if keys[pygame.K_SPACE] and self.can_shoot:
                 self.can_shoot = False
                 self.shoot_time = pygame.time.get_ticks()
-                # if self.cannons == 1:
-                #     Lasers(self.rect.midtop, laser_group)
-                # elif self.cannons == 2:
-                #     Lasers(self.rect.midleft, laser_group)
-                #     Lasers(self.rect.midright, laser_group)
+                pygame.mixer.Sound.play(laser_sound)
                 for cannon in range(self.cannons):
                     Lasers((self.rect.x + self.cannon_offset * (cannon + 1), self.rect.y), laser_group)
 
@@ -78,7 +78,6 @@ def play():
                     if self.score > get_high():
                         with open('./Assets/HS.txt', 'w') as newHS:
                             newHS.write(str(self.score))
-
                     main_menu()
 
         def update(self, dt):
@@ -100,9 +99,9 @@ def play():
 
         def player_collision(self):
             if pygame.sprite.spritecollide(self, all_sprites, False, pygame.sprite.collide_mask):
-                if self.type == 'heart':
+                if self.type == 'heart' and player_one.health < player_one.max_hp:
                     player_one.health += 1
-                elif self.type == 'attack_up':
+                elif self.type == 'attack_up' and player_one.cannons < 5:
                     player_one.cannons += 1
                     player_one.cannon_offset = player_one.rect.width / (player_one.cannons + 1)
                 self.remove(health_group)
@@ -125,7 +124,6 @@ def play():
         def bug_collision(self, pos):
             if pygame.sprite.spritecollide(self, bug_group, True, pygame.sprite.collide_mask):
                 player_one.score += 1
-                # explode(self.pos)
                 roll = randint(1, 100)
                 if 10 > roll > 5:
                     Powerups(pos, 'heart', health_group)
@@ -199,16 +197,113 @@ def play():
         pygame.display.update()
 
 
-def main_menu():
+def controls_menu():
+    menu_font = pygame.font.Font('./Assets/subatomic.ttf', 20)
+    move_left_descript_text = menu_font.render('Move left', True, 'white')
+    move_left_descript_rect = move_left_descript_text.get_rect(topleft=(20, 80))
+    move_left_img = menu_font.render('Left arrow', True, 'white')
+    move_left_img_rect = move_left_img.get_rect(topright=(WIDTH - 20, move_left_descript_rect.y))
+    move_right_descript_text = menu_font.render('Move right', True, 'white')
+    move_right_descript_rect = move_right_descript_text.get_rect(topleft=(20, move_left_img_rect.y + 50))
+    move_right_img = menu_font.render('Right arrow', True, 'white')
+    move_right_img_rect = move_right_img.get_rect(topright=(WIDTH - 20, move_right_descript_rect.y))
+    shoot_descript_text = menu_font.render('Shoot', True, 'white')
+    shoot_descript_rect = shoot_descript_text.get_rect(topleft=(20, move_right_img_rect.y + 50))
+    shoot_img = menu_font.render('Space', True, 'white')
+    shoot_img_rect = shoot_img.get_rect(topright=(WIDTH - 20, shoot_descript_rect.y))
+    powerup_title_text = menu_font.render('Power ups', True, 'white')
+    powerup_title_rect = powerup_title_text.get_rect(center=(WIDTH / 2, shoot_img_rect.y + 50))
+    heart_img = pygame.image.load('./Assets/heart.png').convert_alpha()
+    heart_rect = heart_img.get_rect(topleft=(20, powerup_title_rect.y + 50))
+    heart_descript_text = menu_font.render('Restore 1 Health', True, 'white')
+    heart_descript_rect = heart_descript_text.get_rect(topright=(WIDTH - 20, heart_rect.y))
+    attack_up_img = pygame.image.load('./Assets/attack_up.png').convert_alpha()
+    attack_up_rect = attack_up_img.get_rect(topleft=(20, heart_rect.y + 50))
+    attack_up_descript_text = menu_font.render('Restore 1 Health', True, 'white')
+    attack_up_descript_rect = attack_up_descript_text.get_rect(topright=(WIDTH - 20, attack_up_rect.y))
+    exit_descript_text = menu_font.render('EXIT', True, 'white')
+    exit_descript_rect = exit_descript_text.get_rect(center=(WIDTH / 2, attack_up_descript_rect.y + 50))
 
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if pygame.mouse.get_pressed()[0]:
+                menu_mouse_pos = pygame.mouse.get_pos()
+                if exit_descript_rect.collidepoint(menu_mouse_pos):
+                    main_menu()
+
+        main_window.blit(BG, (0, 0))
+        main_window.blit(move_left_descript_text, move_left_descript_rect)
+        main_window.blit(move_left_img, move_left_img_rect)
+        main_window.blit(move_right_descript_text, move_right_descript_rect)
+        main_window.blit(move_right_img, move_right_img_rect)
+        main_window.blit(shoot_descript_text, shoot_descript_rect)
+        main_window.blit(shoot_img, shoot_img_rect)
+        main_window.blit(exit_descript_text, exit_descript_rect)
+        main_window.blit(powerup_title_text, powerup_title_rect)
+        main_window.blit(heart_img, heart_rect)
+        main_window.blit(heart_descript_text, heart_descript_rect)
+        main_window.blit(attack_up_descript_text, attack_up_descript_rect)
+        main_window.blit(attack_up_img, attack_up_rect)
+        pygame.display.update()
+
+
+def credits():
+    menu_font = pygame.font.Font('./Assets/subatomic.ttf', 20)
+    move_left_descript_text = menu_font.render('Music by', True, 'white')
+    move_left_descript_rect = move_left_descript_text.get_rect(topleft=(20, 80))
+    move_left_img = menu_font.render('BloodPixelHero', True, 'white')
+    move_left_img_rect = move_left_img.get_rect(topright=(WIDTH - 20, move_left_descript_rect.y))
+    move_right_descript_text = menu_font.render('Sound Effects by', True, 'white')
+    move_right_descript_rect = move_right_descript_text.get_rect(topleft=(20, move_left_img_rect.y + 50))
+    move_right_img = menu_font.render('Jobro', True, 'white')
+    move_right_img_rect = move_right_img.get_rect(topright=(WIDTH - 20, move_right_descript_rect.y))
+    shoot_descript_text = menu_font.render('Graphics by', True, 'white')
+    shoot_descript_rect = shoot_descript_text.get_rect(topleft=(20, move_right_img_rect.y + 50))
+    shoot_img = menu_font.render('TequilaJosh', True, 'white')
+    shoot_img_rect = shoot_img.get_rect(topright=(WIDTH - 20, shoot_descript_rect.y))
+    exit_descript_text = menu_font.render('EXIT', True, 'white')
+    exit_descript_rect = exit_descript_text.get_rect(center=(WIDTH / 2, shoot_img_rect.y + 50))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if pygame.mouse.get_pressed()[0]:
+                menu_mouse_pos = pygame.mouse.get_pos()
+                if exit_descript_rect.collidepoint(menu_mouse_pos):
+                    main_menu()
+
+        main_window.blit(BG, (0, 0))
+        main_window.blit(move_left_descript_text, move_left_descript_rect)
+        main_window.blit(move_left_img, move_left_img_rect)
+        main_window.blit(move_right_descript_text, move_right_descript_rect)
+        main_window.blit(move_right_img, move_right_img_rect)
+        main_window.blit(shoot_descript_text, shoot_descript_rect)
+        main_window.blit(shoot_img, shoot_img_rect)
+        main_window.blit(exit_descript_text, exit_descript_rect)
+        pygame.display.update()
+
+def main_menu():
+    pygame.mixer.music.load('./Assets/Music/menu_music.wav')
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play()
     menu_font = pygame.font.Font('./Assets/subatomic.ttf', 50)
     score_font = pygame.font.Font('./Assets/subatomic.ttf', 25)
     play_text = menu_font.render('PLAY', True, 'white')
-    play_rect = play_text.get_rect(center=(WIDTH/2, HEIGHT/2))
+    play_rect = play_text.get_rect(center=(WIDTH/2 , HEIGHT/2 - 50))
+    options_text = menu_font.render('CONTROLS', True, 'white')
+    options_rect = options_text.get_rect(center=(WIDTH / 2, play_rect.y + 90))
     exit_text = menu_font.render('EXIT', True, ' white')
-    exit_rect = exit_text.get_rect(topleft=(play_rect.x + 12, play_rect.y + 80))
+    exit_rect = exit_text.get_rect(center=(WIDTH / 2, options_rect.y + 90))
     hs_text = score_font.render(f'High Score {get_high()}', True, ' white')
     hs_rect = hs_text.get_rect(topright=(WIDTH - 30, 20))
+    credit_text = score_font.render('Credits', True, ' white')
+    credit_rect = credit_text.get_rect(topleft=(30, hs_rect.y))
 
     while True:
         for event in pygame.event.get():
@@ -218,7 +313,12 @@ def main_menu():
             if pygame.mouse.get_pressed()[0]:
                 menu_mouse_pos = pygame.mouse.get_pos()
                 if play_rect.collidepoint(menu_mouse_pos):
+                    pygame.mixer.music.unload()
                     play()
+                if options_rect.collidepoint(menu_mouse_pos):
+                    controls_menu()
+                if credit_rect.collidepoint(menu_mouse_pos):
+                    credits()
                 if exit_rect.collidepoint(menu_mouse_pos):
                     pygame.quit()
                     sys.exit()
@@ -226,7 +326,9 @@ def main_menu():
         main_window.blit(BG, (0, 0))
         main_window.blit(play_text, play_rect)
         main_window.blit(exit_text, exit_rect)
+        main_window.blit(options_text, options_rect)
         main_window.blit(hs_text, hs_rect)
+        main_window.blit(credit_text, credit_rect)
         pygame.display.update()
 
 
