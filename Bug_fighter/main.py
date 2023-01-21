@@ -9,7 +9,7 @@ main_window = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Bug Fighter')
 clock = pygame.time.Clock()
 BG = pygame.transform.scale(pygame.image.load('./Assets/BG.jpg').convert(), (WIDTH, HEIGHT))
-laser_sound = pygame.mixer.Sound('./Assets/Music/laser.wav')
+# laser_sound = pygame.mixer.Sound('./Assets/Music/laser.wav')
 def get_high():
     with open('./Assets/HS.txt', 'r') as HS:
         try:
@@ -20,9 +20,9 @@ def get_high():
 
 
 def play():
-    pygame.mixer.music.load('./Assets/Music/play_music.wav')
-    pygame.mixer.music.set_volume(0.5)
-    pygame.mixer.music.play()
+    # pygame.mixer.music.load('./Assets/Music/play_music.wav')
+    # pygame.mixer.music.set_volume(0.5)
+    # pygame.mixer.music.play()
     class Player(pygame.sprite.Sprite):
         def __init__(self, pos, groups):
             super().__init__(groups)
@@ -60,7 +60,7 @@ def play():
             if keys[pygame.K_SPACE] and self.can_shoot:
                 self.can_shoot = False
                 self.shoot_time = pygame.time.get_ticks()
-                pygame.mixer.Sound.play(laser_sound)
+                # pygame.mixer.Sound.play(laser_sound)
                 for cannon in range(self.cannons):
                     Lasers((self.rect.x + self.cannon_offset * (cannon + 1), self.rect.y), laser_group)
 
@@ -289,9 +289,9 @@ def credits():
         pygame.display.update()
 
 def main_menu():
-    pygame.mixer.music.load('./Assets/Music/menu_music.wav')
-    pygame.mixer.music.set_volume(0.5)
-    pygame.mixer.music.play()
+    # pygame.mixer.music.load('./Assets/Music/menu_music.wav')
+    # pygame.mixer.music.set_volume(0.5)
+    # pygame.mixer.music.play()
     menu_font = pygame.font.Font('./Assets/subatomic.ttf', 50)
     score_font = pygame.font.Font('./Assets/subatomic.ttf', 25)
     play_text = menu_font.render('PLAY', True, 'white')
